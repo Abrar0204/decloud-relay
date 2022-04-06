@@ -20,15 +20,23 @@ const main = async () => {
   const relay = await createRelayServer({
     peerId: await getRelayPeerId(),
     listenAddresses: [`/ip4/0.0.0.0/tcp/${process.env.PORT || 20401}`],
-    announceAddresses: [
-      `/dns4/decloud-relay.herokuapp.com/tcp/${process.env.PORT || 20401}`,
-    ],
+    // announceAddresses: [
+    //   `/dns4/decloud-relay.herokuapp.com/tcp/${process.env.PORT || 20401}`,
+    // ],
   });
   console.log(`libp2p relay starting with id: ${relay.peerId.toB58String()}`);
   await relay.start();
   const relayMultiaddrs = relay.multiaddrs.map(
     (m) => `${m.toString()}/p2p/${relay.peerId.toB58String()}`
   );
+
+  relay.on("peer:discovery", async (peerId) => {
+    console.log(`[DISCOVERED]: ${peerId.toB58String()}`);
+  });
+
+  relay.connectionManager.on("peer:connect", (connection) => {
+    console.log("[CONNECTED]:", connection.remotePeer.toB58String());
+  });
 
   console.log(relayMultiaddrs);
 };
